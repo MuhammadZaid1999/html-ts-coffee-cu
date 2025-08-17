@@ -9,6 +9,7 @@ import {
     parseEther,
     formatEther,
     WalletClient,
+    getContract,
     type PublicClient,
     type Chain,
     Address,
@@ -23,6 +24,7 @@ const fundButton: HTMLButtonElement = document.getElementById("fundButton") as H
 const ethAmountInput: HTMLInputElement = document.getElementById("ethAmount") as HTMLInputElement;
 const balanceButton: HTMLButtonElement = document.getElementById("balanceButton") as HTMLButtonElement;
 const withdrawButton: HTMLButtonElement = document.getElementById("withdrawButton") as HTMLButtonElement;
+const donationButton: HTMLButtonElement = document.getElementById("donationButton") as HTMLButtonElement;
 
 // Client instances
 let walletClient: WalletClient;
@@ -182,8 +184,36 @@ async function withdraw(): Promise<void> {
     }
 }
 
+async function getDonation(): Promise<void> {
+    if (typeof window.ethereum !== "undefined") {
+        try {
+            publicClient = createPublicClient({
+                transport: custom(window.ethereum)
+            });
+
+            const contract = getContract({ 
+                address: contractAddress, 
+                abi: coffeeAbi, 
+                client: publicClient 
+            });
+            
+            const walletAddress: Address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; 
+
+            const myBalance: bigint = await contract.read.getAddressToAmountFunded([walletAddress]);
+            console.log(`My Donation: ${formatEther(myBalance)} ETH`);
+            
+        } catch (error) {
+            console.error("Error getting donation:", error);
+        }
+    } else {
+        console.log("Please install MetaMask!");
+        donationButton.innerHTML = "Please install MetaMask";
+    }
+}
+
 // Event listeners
 connectButton.onclick = connect;
 fundButton.onclick = fund;
 balanceButton.onclick = getBalance;
 withdrawButton.onclick = withdraw;
+donationButton.onclick = getDonation;

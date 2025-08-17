@@ -11,7 +11,8 @@ import {
     createPublicClient, 
     defineChain,
     parseEther,
-    formatEther 
+    formatEther,
+    getContract 
 } from "https://esm.sh/viem";
 import { contractAddress, coffeeAbi } from "./constants-js.js";
 
@@ -21,6 +22,7 @@ const fundButton = document.getElementById("fundButton");
 const ethAmountInput = document.getElementById("ethAmount");
 const balanceButton = document.getElementById("balanceButton");
 const withdrawButton = document.getElementById("withdrawButton");
+const donationButton = document.getElementById("donationButton");
 
 let walletClient;
 let publicClient; 
@@ -204,8 +206,35 @@ async function withdraw() {
     }
 }
 
+async function getDonation() {
+    if (typeof window.ethereum !== "undefined") {
+        try {
+            publicClient = createPublicClient({
+                transport: custom(window.ethereum)
+            });
+
+            const contract = getContract({ 
+                address: contractAddress, 
+                abi: coffeeAbi, 
+                client: publicClient 
+            });
+            
+            const walletAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; 
+            const myBalance = await contract.read.getAddressToAmountFunded([walletAddress]);
+            console.log(`My Donation: ${formatEther(myBalance)} ETH`);
+            
+        } catch (error) {
+            console.error("Error getting donation:", error);
+        }
+    } else {
+        console.log("Please install MetaMask!");
+        donationButton.innerHTML = "Please install MetaMask";
+    }
+}
+
 connectButton.onclick = connect;
 // connectButton.addEventListener("click", connect); ---- this is another way to add an event listener
 fundButton.onclick = fund;
 balanceButton.onclick = getBalance;
 withdrawButton.onclick = withdraw;
+donationButton.onclick = getDonation;
